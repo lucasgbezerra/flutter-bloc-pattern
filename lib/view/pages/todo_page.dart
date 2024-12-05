@@ -3,8 +3,9 @@ import 'package:bloc_pattern/blocs/task_event.dart';
 import 'package:bloc_pattern/blocs/task_state.dart';
 import 'package:bloc_pattern/data/models/taskModel.dart';
 import 'package:bloc_pattern/data/repositories/task_repository.dart';
-import 'package:bloc_pattern/presentation/widgets/item.dart';
+import 'package:bloc_pattern/view/widgets/item.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class TodoPage extends StatefulWidget {
   const TodoPage({super.key});
@@ -20,14 +21,15 @@ class _TodoPageState extends State<TodoPage> {
   @override
   void initState() {
     super.initState();
-    _taskBloc.taskSink.add(GetTask());
+    _taskBloc.add(GetTask());
   }
 
   @override
   void dispose() {
-    _taskBloc.taskSink.close();
+    _taskBloc.close();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,14 +37,15 @@ class _TodoPageState extends State<TodoPage> {
           title: const Text("Bloc Pattern"),
           backgroundColor:  Colors.blue
         ),
-        body: StreamBuilder(stream: _taskBloc.taskStream, builder: (context, state) {
-          if (state.data is TaskLoadingState) {
+        body: BlocBuilder(bloc: _taskBloc, builder: (context, state) {
+          if (state is TaskLoadingState) {
             return const Center(child: CircularProgressIndicator());
-          }else if (state.data is TaskLoadedState) {
-            final list = state.data?.tasks ?? [];
+          }else if (state is TaskLoadedState) {
+            final list = state?.tasks ?? [];
             return ListView(
-              children: list.map((task) => Item(task: task, deleteFunc: (){
-                _taskBloc.taskSink.add(DeleteTask(task: task));
+              children:
+              list.map((task) => Item(task: task, deleteFunc: (){
+                _taskBloc.add(DeleteTask(task: task));
                 print("Remover");
                 },)).toList(),
             );
@@ -52,7 +55,7 @@ class _TodoPageState extends State<TodoPage> {
         }),
           floatingActionButton: FloatingActionButton(onPressed:() {
             print("Adicionando nova tarefa");
-            _taskBloc.taskSink.add(PostTask(task: TaskModel(title: "titulo novo", description: "Descricao")));
+            _taskBloc.add(PostTask(task: TaskModel(title: "NOVO", description: "Descricao")));
           }, child: Icon(Icons.add),
           backgroundColor: Colors.blue,),
         );

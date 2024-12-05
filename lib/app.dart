@@ -1,4 +1,4 @@
-import 'package:bloc_pattern/presentation/pages/todo_page.dart';
+import 'package:bloc_pattern/view/pages/todo_page.dart';
 import 'package:flutter/material.dart';
 
 class App extends StatelessWidget {

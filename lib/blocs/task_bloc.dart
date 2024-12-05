@@ -1,48 +1,42 @@
 import 'dart:async';
 
+import 'package:bloc/bloc.dart';
 import 'package:bloc_pattern/blocs/task_event.dart';
 import 'package:bloc_pattern/blocs/task_state.dart';
 import 'package:bloc_pattern/data/models/taskModel.dart';
 import 'package:bloc_pattern/data/repositories/task_repository.dart';
 
-class TaskBloc {
+class TaskBloc extends Bloc<TaskEvent, TaskState> {
   final _repository = TaskRepository();
 
-  // Controladores da tarefa
-  final StreamController<TaskEvent> _inputTaskController = StreamController<TaskEvent>();
-  final StreamController<TaskState> _outputTaskController = StreamController<TaskState>();
-
-  Stream<TaskState> get taskStream => _outputTaskController.stream;
-  StreamSink<TaskEvent> get taskSink => _inputTaskController.sink;
-
-  TaskBloc() {
-    _inputTaskController.stream.listen(_mapEventToState);
+  TaskBloc() : super(TaskInitialState()) {
+    on(_mapEventToState);
   }
   
 
-  void _mapEventToState(TaskEvent event) {
-      List<TaskModel > tasks = [];
+  Future<void> _mapEventToState(TaskEvent event, Emitter<TaskState> emit) async {
+try {
+    // Emitir o estado de carregamento
+    emit(TaskLoadingState());
 
-    // Sempre que um evento é adicionado ocorre um loading
-    _outputTaskController.add(TaskLoadingState());
+    List<TaskModel> tasks = [];
 
-    if(event is GetTask) {
-      _repository.getAllTasks().then((value) {
-        tasks = value;
-        _outputTaskController.add(TaskLoadedState(tasks: tasks));
-      });
+    if (event is GetTask) {
+      tasks = await _repository.getAllTasks();
     } else if (event is PostTask) {
-      _repository.addTask(task: event.task).then((value) {
-        _repository.getAllTasks().then((value) {
-          tasks = value;
-          _outputTaskController.add(TaskLoadedState(tasks: tasks));
-        });
-      });
+      await _repository.addTask(task: event.task); // Adiciona tarefa
+      tasks = await _repository.getAllTasks();     // Busca lista atualizada
     } else if (event is DeleteTask) {
-      _repository.deleteTaskById(task: event.task).then((value) {
-        tasks = value;
-        _outputTaskController.add(TaskLoadedState(tasks: tasks));
-      });
+      await _repository.deleteTaskById(task: event.task); // Deleta tarefa
+      tasks = await _repository.getAllTasks();            // Busca lista atualizada
     }
+
+    // Emitir o estado de tarefas carregadas
+    emit(TaskLoadedState(tasks: tasks));
+    
+  } catch (error) {
+    // Emitir um estado de erro em caso de falha
+    emit(TaskErrorState(error: error.toString()));
+  }
   }
 }

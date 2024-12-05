@@ -20,3 +20,10 @@ class TaskLoadedState extends TaskState{
   TaskLoadedState({required List<TaskModel> tasks}) : super(tasks: tasks);
 
 }
+
+class TaskErrorState extends TaskState{
+  final String error;
+
+  TaskErrorState({required this.error}) : super(tasks: []);
+
+}

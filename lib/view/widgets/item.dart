@@ -9,6 +9,7 @@ class Item extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
+      focusColor: Colors.blue,
       leading: Icon(task.isCompleted == null || task.isCompleted == false ? Icons.check_box_outline_blank : Icons.check),
       title: Text(task.title),
       subtitle: Text(task.description),
